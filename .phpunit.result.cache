@@ -1,0 +1,1 @@
+C:37:"PHPUnit\Runner\DefaultTestResultCache":300:{a:2:{s:7:"defects";a:1:{s:79:"Modstore\LaravelEnumJs\Tests\Console\Commands\GenerateCommandTest::testGenerate";i:5;}s:5:"times";a:2:{s:79:"Modstore\LaravelEnumJs\Tests\Console\Commands\GenerateCommandTest::testGenerate";d:0.218;s:54:"Modstore\LaravelEnumJs\Tests\ExampleTest::true_is_true";d:0.046;}}}
