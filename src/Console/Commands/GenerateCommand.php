@@ -46,7 +46,8 @@ class GenerateCommand extends Command
             return str_replace('\\*', '.+', preg_quote($item));
         })->implode('|') . '/';
 
-        $classes = get_declared_classes();
+        $classLoader = require('vendor/autoload.php');
+        $classes = array_unique(array_merge(get_declared_classes(), array_keys($classLoader->getClassMap())));
 
         // Create a js file for any class that matches the specified pattern.
         foreach ($classes as $class) {

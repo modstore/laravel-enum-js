@@ -26,7 +26,7 @@ Create a storage location, the path the generated files will be saved to.
 'disks' => [
     'enum-js' => [
         'driver' => 'local',
-        'root' => resource_path() . '/assets/js/enums',
+        'root' => resource_path() . '/js/enums',
     ],
 ],
 ...
