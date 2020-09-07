@@ -44,11 +44,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "LaravelEnumJsServiceProvider"
-            ],
-            "aliases": {
-                "LaravelEnumJs": "LaravelEnumJsFacade"
-            }
+                "Modstore\\LaravelEnumJs\\LaravelEnumJsServiceProvider"
+            ]
         }
     }
 }
