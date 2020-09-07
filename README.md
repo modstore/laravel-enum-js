@@ -11,6 +11,12 @@ You can install the package via composer:
 composer require modstore/laravel-enum-js
 ```
 
+Publish the config:
+
+```
+php artisan vendor:publish --provider="Modstore\LaravelEnumJs\LaravelEnumJsServiceProvider"
+```
+
 ## Usage
 
 Create a storage location, the path the generated files will be saved to.
