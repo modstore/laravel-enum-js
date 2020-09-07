@@ -1,11 +1,7 @@
-# Very short description of the package
+# Laravel Enum Js
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/modstore/laravel-enum-js.svg?style=flat-square)](https://packagist.org/packages/modstore/laravel-enum-js)
-[![Build Status](https://img.shields.io/travis/modstore/laravel-enum-js/master.svg?style=flat-square)](https://travis-ci.org/modstore/laravel-enum-js)
-[![Quality Score](https://img.shields.io/scrutinizer/g/modstore/laravel-enum-js.svg?style=flat-square)](https://scrutinizer-ci.com/g/modstore/laravel-enum-js)
-[![Total Downloads](https://img.shields.io/packagist/dt/modstore/laravel-enum-js.svg?style=flat-square)](https://packagist.org/packages/modstore/laravel-enum-js)
-
-This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what PSRs you support to avoid any confusion with users and contributors.
+Package to generate javascript versions of your PHP enum files to be used in your js builds etc.
+Will work with constants in your PHP files, or you can use a package such as https://github.com/BenSampo/laravel-enum
 
 ## Installation
 
@@ -29,6 +25,21 @@ Create a storage location, the path the generated files will be saved to.
 ],
 ...
 ```
+Check the other configuration options in the config file.
+
+You can generate the js files by running the following Artisan command:
+``` bash
+php artisan enum-js:generate 
+```
+
+You can then use the generated files in your javascript like so:
+``` javascript
+import * as Status from '../enums/Status'
+
+if (this.status === Status.Active) {
+    // Do something.
+}
+```
 
 ### Testing
 
@@ -44,10 +55,6 @@ Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recen
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-### Security
-
-If you discover any security related issues, please email mark@priceguard.com.au instead of using the issue tracker.
-
 ## Credits
 
 - [Mark Whitney](https://github.com/modstore)
@@ -56,7 +63,3 @@ If you discover any security related issues, please email mark@priceguard.com.au
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-## Laravel Package Boilerplate
-
-This package was generated using the [Laravel Package Boilerplate](https://laravelpackageboilerplate.com).
