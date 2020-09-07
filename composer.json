@@ -1,6 +1,6 @@
 {
     "name": "modstore/laravel-enum-js",
-    "description": "Something",
+    "description": "Package to generate javascript versions of your PHP enum files to be used in your js builds etc.",
     "keywords": [
         "modstore",
         "laravel-enum-js"
