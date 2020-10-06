@@ -38,6 +38,13 @@ You can generate the js files by running the following Artisan command:
 php artisan enum-js:generate 
 ```
 
+NOTE: When developing, if you create a new file, you will likely need to dump the
+ autoload files before this command will pick it up, e.g.
+``` bash
+composer dump-autoload
+php artisan enum-js:generate 
+```
+
 You can then use the generated files in your javascript like so:
 ``` javascript
 import * as Status from '../enums/Status'
