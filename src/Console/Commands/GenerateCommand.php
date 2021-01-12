@@ -79,7 +79,12 @@ class GenerateCommand extends Command
 
         $outputString = '';
         foreach ($reflection->getConstants() as $key => $value) {
-            $outputString .= sprintf("export const %s = %s\n", $key, $value);
+            if (gettype($value) == gettype(" ") ) {
+                $outputString .= sprintf("export const %s = \"%s\"\n", $key, $value);
+            }
+            else {
+                $outputString .= sprintf("export const %s = %s\n", $key, $value);
+            }
         }
 
         Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);
