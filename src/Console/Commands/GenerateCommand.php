@@ -96,7 +96,10 @@ class GenerateCommand extends Command
                         $outputString .= sprintf("    %s : %s,\n", $key, $value);
                     }
                 }
-                $outputString .= "} // end $baseName";
+                $outputString .= <<<EOT
+            } // end $baseName";
+            export default $baseName;
+            EOT;
                 // array_push($enumStrings, $outputString);
             
             // $enumStrings = implode("\n", $enumStrings);
