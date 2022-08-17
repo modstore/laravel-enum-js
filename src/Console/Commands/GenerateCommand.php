@@ -77,12 +77,17 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
+        $is_enum = method_exists($reflection, 'isEnum') && $reflection->isEnum();
+
         $outputString = '';
         foreach ($reflection->getConstants() as $key => $value) {
-            if (gettype($value) == gettype(" ") ) {
-                $outputString .= sprintf("export const %s = \"%s\"\n", $key, $value);
+            if ($is_enum) {
+                $value = property_exists($value, 'value') ? $value->value : $value->name;
             }
-            else {
+
+            if (gettype($value) == gettype(" ")) {
+                $outputString .= sprintf("export const %s = \"%s\"\n", $key, $value);
+            } else {
                 $outputString .= sprintf("export const %s = %s\n", $key, $value);
             }
         }
