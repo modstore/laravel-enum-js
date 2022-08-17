@@ -1,7 +1,7 @@
 # Laravel Enum Js
 
 Package to generate javascript versions of your PHP enum files to be used in your js builds etc.
-Will work with constants in your PHP files, or you can use a package such as https://github.com/BenSampo/laravel-enum
+Works with Php8.1+ enums, constants in your PHP files, or you can use a package such as https://github.com/BenSampo/laravel-enum
 
 ## Installation
 
