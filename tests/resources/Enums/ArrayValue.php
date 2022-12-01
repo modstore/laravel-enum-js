@@ -5,7 +5,7 @@ namespace App\Enums;
 use App\Enums\Native\BackedInt;
 use App\Enums\Native\BackedString;
 
-final class ArrayType
+final class ArrayValue
 {
     const IntArray = [
         BackedInt::Value1,
