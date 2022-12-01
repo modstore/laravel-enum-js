@@ -85,11 +85,7 @@ class GenerateCommand extends Command
                 $value = property_exists($value, 'value') ? $value->value : $value->name;
             }
 
-            if (gettype($value) == gettype(" ")) {
-                $outputString .= sprintf("export const %s = \"%s\"\n", $key, $value);
-            } else {
-                $outputString .= sprintf("export const %s = %s\n", $key, $value);
-            }
+            $outputString .= sprintf("export const %s = %s\n", $key, json_encode($value));
         }
 
         Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);

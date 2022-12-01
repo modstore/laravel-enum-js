@@ -25,18 +25,20 @@ class GenerateCommandTest extends TestCase
     public function testGenerate()
     {
         // Include some classes for this test.
-        include('tests/resources/Enums/Status.php');
-        include('tests/resources/Enums/StringValue.php');
-        include('tests/resources/Enums/Sub/Type.php');
-        include('tests/resources/Enums/Native/BackedString.php');
-        include('tests/resources/Enums/Native/Base.php');
-        include('tests/resources/Enums/Native/BackedInt.php');
+        include_once('tests/resources/Enums/Status.php');
+        include_once('tests/resources/Enums/StringValue.php');
+        include_once('tests/resources/Enums/Sub/Type.php');
+        include_once('tests/resources/Enums/Native/BackedString.php');
+        include_once('tests/resources/Enums/Native/Base.php');
+        include_once('tests/resources/Enums/Native/BackedInt.php');
+        include_once('tests/resources/Enums/ArrayValue.php');
 
         Artisan::call('enum-js:generate');
 
         $generatedFiles = Storage::disk(config('laravel-enum-js.output_disk'))->allFiles();
 
         $this->assertSame([
+            'ArrayValue.js',
             'Native/BackedInt.js',
             'Native/BackedString.js',
             'Native/Base.js',
@@ -69,6 +71,10 @@ class GenerateCommandTest extends TestCase
                 'filename' => 'Native/BackedString.php',
                 'expectedContent' => "export const Value1 = \"value-1\"\nexport const Value2 = \"value-2\"\n",
             ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "export const IntArray = [1,2]\nexport const StringArray = [\"value-1\",\"value-2\"]\n",
+            ],
         ];
     }
 
@@ -77,7 +83,7 @@ class GenerateCommandTest extends TestCase
      */
     public function testGeneratedContent(string $filename, string $expectedContent)
     {
-        include('tests/resources/Enums/' . $filename);
+        include_once('tests/resources/Enums/' . $filename);
 
         Artisan::call('enum-js:generate');
 
