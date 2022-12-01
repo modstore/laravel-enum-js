@@ -25,12 +25,14 @@ class GenerateCommandTest extends TestCase
         include('tests/resources/Enums/Native/BackedString.php');
         include('tests/resources/Enums/Native/Base.php');
         include('tests/resources/Enums/Native/BackedInt.php');
+        include('tests/resources/Enums/ArrayType.php');
 
         Artisan::call('enum-js:generate');
 
         $generatedFiles = Storage::disk(config('laravel-enum-js.output_disk'))->allFiles();
 
         $this->assertSame([
+            'ArrayType.js',
             'Native/BackedInt.js',
             'Native/BackedString.js',
             'Native/Base.js',
