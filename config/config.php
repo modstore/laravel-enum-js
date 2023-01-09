@@ -14,4 +14,7 @@ return [
     'output_transform' => [
         'App\\Enums\\' => '',
     ],
+
+    // Set a specific extension for the output files (without a dot character).
+    'output_file_extension' => 'js',
 ];

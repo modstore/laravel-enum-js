@@ -73,7 +73,7 @@ class GenerateCommand extends Command
         foreach (config('laravel-enum-js.output_transform') as $pattern => $replacement) {
             $outputPath = preg_replace('/' . preg_quote($pattern) . '/', $replacement, $outputPath);
         }
-        $outputPath .= '.js';
+        $outputPath .= '.' . config('laravel-enum-js.output_file_extension');
 
         $reflection = new \ReflectionClass($class);
 
