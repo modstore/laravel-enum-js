@@ -33,7 +33,7 @@ class GenerateCommand extends Command
 
         // Just to ensure this isn't accidentally the wrong directly with non-js files.
         $nonJsFiles = collect($files)->filter(function ($filename) {
-            return preg_match('/\.js$/', $filename) !== 1;
+            return preg_match('/\.' . config('laravel-enum-js.output_file_extension', 'js') . '$/', $filename) !== 1;
         });
 
         if ($nonJsFiles->count() > 0) {
@@ -73,7 +73,7 @@ class GenerateCommand extends Command
         foreach (config('laravel-enum-js.output_transform') as $pattern => $replacement) {
             $outputPath = preg_replace('/' . preg_quote($pattern) . '/', $replacement, $outputPath);
         }
-        $outputPath .= '.' . config('laravel-enum-js.output_file_extension');
+        $outputPath .= '.' . config('laravel-enum-js.output_file_extension', 'js');
 
         $reflection = new \ReflectionClass($class);
 
