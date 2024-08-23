@@ -61,15 +61,15 @@ class GenerateCommandTest extends TestCase
             ],
             'native' => [
                 'filename' => 'Native/Base.php',
-                'expectedContent' => "export const Value1 = \"Value1\"\nexport const Value2 = \"Value2\"\n",
+                'expectedContent' => "export const Value1 = \"Value1\"\nexport const Value2 = \"Value2\"\nexport const ADDITIONAL_CONST = [\"example\"]\n",
             ],
             'native backed int' => [
                 'filename' => 'Native/BackedInt.php',
-                'expectedContent' => "export const Value1 = 1\nexport const Value2 = 2\n",
+                'expectedContent' => "export const Value1 = 1\nexport const Value2 = 2\nexport const ADDITIONAL_CONST = [\"example\"]\n",
             ],
             'native backed string' => [
                 'filename' => 'Native/BackedString.php',
-                'expectedContent' => "export const Value1 = \"value-1\"\nexport const Value2 = \"value-2\"\n",
+                'expectedContent' => "export const Value1 = \"value-1\"\nexport const Value2 = \"value-2\"\nexport const ADDITIONAL_CONST = [\"example\"]\n",
             ],
             'array' => [
                 'filename' => 'ArrayValue.php',

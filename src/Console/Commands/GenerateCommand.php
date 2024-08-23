@@ -77,15 +77,14 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
-        $is_enum = method_exists($reflection, 'isEnum') && $reflection->isEnum();
-
         $outputString = '';
-        foreach ($reflection->getConstants() as $key => $value) {
-            if ($is_enum) {
+        foreach ($reflection->getReflectionConstants() as $constant) {
+            $value = $constant->getValue();
+            if (method_exists($constant, 'isEnumCase') && $constant->isEnumCase()) {
                 $value = property_exists($value, 'value') ? $value->value : $value->name;
             }
 
-            $outputString .= sprintf("export const %s = %s\n", $key, json_encode($value));
+            $outputString .= sprintf("export const %s = %s\n", $constant->getName(), json_encode($value));
         }
 
         Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);
