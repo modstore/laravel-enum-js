@@ -5,7 +5,6 @@ namespace Modstore\LaravelEnumJs\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Modstore\LaravelEnumJs\Resources\OutputFormatFactory;
-use const PATHINFO_FILENAME;
 
 class GenerateCommand extends Command
 {
@@ -85,5 +84,4 @@ class GenerateCommand extends Command
 
         $this->info(sprintf('File written to: %s', $outputPath));
     }
-
 }

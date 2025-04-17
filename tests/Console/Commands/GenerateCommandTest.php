@@ -4,7 +4,6 @@ namespace Modstore\LaravelEnumJs\Tests\Console\Commands;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modstore\LaravelEnumJs\Tests\TestCase;
 
