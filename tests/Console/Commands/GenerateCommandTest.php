@@ -130,7 +130,7 @@ class GenerateCommandTest extends TestCase
      */
     public function testGeneratedObjectFormat(string $filename, string $expectedContent)
     {
-        Config::set('laravel-enum-js.as_object', true);
+        Config::set('laravel-enum-js.output_style', 'object');
 
         include_once('tests/resources/Enums/' . $filename);
 

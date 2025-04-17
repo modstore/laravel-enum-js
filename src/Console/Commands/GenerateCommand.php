@@ -79,8 +79,7 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
-        $formatAsObject = config('laravel-enum-js.as_object', false);
-        $formatter = OutputFormatFactory::create($formatAsObject ? 'object' : 'constant', $reflection);
+        $formatter = OutputFormatFactory::create( config('laravel-enum-js.output_style', 'constant'), $reflection);
 
         Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $formatter->getFileContents());
 
