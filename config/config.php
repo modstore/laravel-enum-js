@@ -17,4 +17,8 @@ return [
 
     // Set a specific extension for the output files (without a dot character).
     'output_file_extension' => 'js',
+
+    // here you may configure the desired output style for the generated js files.
+    // Available options: 'constant', 'object'
+    'output_style' => 'constant',
 ];

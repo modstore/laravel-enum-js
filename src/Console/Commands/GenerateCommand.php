@@ -4,6 +4,7 @@ namespace Modstore\LaravelEnumJs\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Modstore\LaravelEnumJs\Resources\OutputFormatFactory;
 
 class GenerateCommand extends Command
 {
@@ -43,8 +44,8 @@ class GenerateCommand extends Command
         Storage::disk(config('laravel-enum-js.output_disk'))->delete($files);
 
         $pattern = '/' . collect(config('laravel-enum-js.namespaces'))->map(function ($item) {
-            return str_replace('\\*', '.+', preg_quote($item));
-        })->implode('|') . '/';
+                return str_replace('\\*', '.+', preg_quote($item));
+            })->implode('|') . '/';
 
         $classLoader = require('vendor/autoload.php');
         $classes = array_unique(array_merge(get_declared_classes(), array_keys($classLoader->getClassMap())));
@@ -67,7 +68,7 @@ class GenerateCommand extends Command
      * @param string $class
      * @throws \ReflectionException
      */
-    protected function writeFile(string $class)
+    protected function writeFile(string $class): void
     {
         $outputPath = $class;
         foreach (config('laravel-enum-js.output_transform') as $pattern => $replacement) {
@@ -77,17 +78,9 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
-        $outputString = '';
-        foreach ($reflection->getReflectionConstants() as $constant) {
-            $value = $constant->getValue();
-            if (method_exists($constant, 'isEnumCase') && $constant->isEnumCase()) {
-                $value = property_exists($value, 'value') ? $value->value : $value->name;
-            }
+        $formatter = OutputFormatFactory::create( config('laravel-enum-js.output_style', 'constant'), $reflection);
 
-            $outputString .= sprintf("export const %s = %s\n", $constant->getName(), json_encode($value));
-        }
-
-        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);
+        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $formatter->getFileContents());
 
         $this->info(sprintf('File written to: %s', $outputPath));
     }
