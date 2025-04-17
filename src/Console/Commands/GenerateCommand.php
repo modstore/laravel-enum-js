@@ -4,6 +4,7 @@ namespace Modstore\LaravelEnumJs\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Modstore\LaravelEnumJs\Resources\OutputFormatFactory;
 use const PATHINFO_FILENAME;
 
 class GenerateCommand extends Command
@@ -78,58 +79,12 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
-        if(config('laravel-enum-js.as_object', false)) {
-            $exploded=explode('\\', $class);
-            $objectName = end($exploded);
-            $outputString = $this->writeAsObject($reflection->getReflectionConstants(), $objectName);
-        } else {
-            $outputString = $this->writeAsConst($reflection->getReflectionConstants());
-        }
+        $formatAsObject = config('laravel-enum-js.as_object', false);
+        $formatter = OutputFormatFactory::create($formatAsObject ? 'object' : 'constant', $reflection);
 
-        if(!$outputString) {
-            $this->error(sprintf('Failed to write file for class: %s', $class));
-            return;
-        }
-
-        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);
+        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $formatter->getFileContents());
 
         $this->info(sprintf('File written to: %s', $outputPath));
     }
 
-    private function getEnumValue($enumCase): mixed
-    {
-        $value = $enumCase->getValue();
-        if (method_exists($enumCase, 'isEnumCase') && $enumCase->isEnumCase()) {
-            $value = property_exists($value, 'value') ? $value->value : $value->name;
-        }
-
-        return $value;
-    }
-
-    private function writeAsConst(array $cases): string
-    {
-        $outputString = '';
-        foreach ($cases as $case) {
-            $value = $this->getEnumValue($case);
-
-            $outputString .= sprintf("export const %s = %s\n", $case->getName(), json_encode($value));
-        }
-
-        return $outputString;
-    }
-
-    private function writeAsObject(array $cases, string $objectName): string
-    {
-        $outputString = sprintf("export const %s = Object.freeze({\n", $objectName);
-
-        foreach ($cases as $case) {
-            $value = $this->getEnumValue($case);
-
-            $outputString .= sprintf("  %s: %s,\n", $case->getName(), json_encode($value));
-        }
-
-        $outputString .= '})';
-
-        return $outputString;
-    }
 }
