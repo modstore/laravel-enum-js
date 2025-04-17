@@ -4,6 +4,7 @@ namespace Modstore\LaravelEnumJs\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use const PATHINFO_FILENAME;
 
 class GenerateCommand extends Command
 {
@@ -43,8 +44,8 @@ class GenerateCommand extends Command
         Storage::disk(config('laravel-enum-js.output_disk'))->delete($files);
 
         $pattern = '/' . collect(config('laravel-enum-js.namespaces'))->map(function ($item) {
-            return str_replace('\\*', '.+', preg_quote($item));
-        })->implode('|') . '/';
+                return str_replace('\\*', '.+', preg_quote($item));
+            })->implode('|') . '/';
 
         $classLoader = require('vendor/autoload.php');
         $classes = array_unique(array_merge(get_declared_classes(), array_keys($classLoader->getClassMap())));
@@ -67,7 +68,7 @@ class GenerateCommand extends Command
      * @param string $class
      * @throws \ReflectionException
      */
-    protected function writeFile(string $class)
+    protected function writeFile(string $class): void
     {
         $outputPath = $class;
         foreach (config('laravel-enum-js.output_transform') as $pattern => $replacement) {
@@ -77,18 +78,58 @@ class GenerateCommand extends Command
 
         $reflection = new \ReflectionClass($class);
 
-        $outputString = '';
-        foreach ($reflection->getReflectionConstants() as $constant) {
-            $value = $constant->getValue();
-            if (method_exists($constant, 'isEnumCase') && $constant->isEnumCase()) {
-                $value = property_exists($value, 'value') ? $value->value : $value->name;
-            }
+        if(config('laravel-enum-js.as_object', false)) {
+            $exploded=explode('\\', $class);
+            $objectName = end($exploded);
+            $outputString = $this->writeAsObject($reflection->getReflectionConstants(), $objectName);
+        } else {
+            $outputString = $this->writeAsConst($reflection->getReflectionConstants());
+        }
 
-            $outputString .= sprintf("export const %s = %s\n", $constant->getName(), json_encode($value));
+        if(!$outputString) {
+            $this->error(sprintf('Failed to write file for class: %s', $class));
+            return;
         }
 
         Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $outputString);
 
         $this->info(sprintf('File written to: %s', $outputPath));
+    }
+
+    private function getEnumValue($enumCase): mixed
+    {
+        $value = $enumCase->getValue();
+        if (method_exists($enumCase, 'isEnumCase') && $enumCase->isEnumCase()) {
+            $value = property_exists($value, 'value') ? $value->value : $value->name;
+        }
+
+        return $value;
+    }
+
+    private function writeAsConst(array $cases): string
+    {
+        $outputString = '';
+        foreach ($cases as $case) {
+            $value = $this->getEnumValue($case);
+
+            $outputString .= sprintf("export const %s = %s\n", $case->getName(), json_encode($value));
+        }
+
+        return $outputString;
+    }
+
+    private function writeAsObject(array $cases, string $objectName): string
+    {
+        $outputString = sprintf("export const %s = Object.freeze({\n", $objectName);
+
+        foreach ($cases as $case) {
+            $value = $this->getEnumValue($case);
+
+            $outputString .= sprintf("  %s: %s,\n", $case->getName(), json_encode($value));
+        }
+
+        $outputString .= '})';
+
+        return $outputString;
     }
 }

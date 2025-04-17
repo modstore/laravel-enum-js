@@ -4,6 +4,7 @@ namespace Modstore\LaravelEnumJs\Tests\Console\Commands;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modstore\LaravelEnumJs\Tests\TestCase;
 
@@ -83,6 +84,54 @@ class GenerateCommandTest extends TestCase
      */
     public function testGeneratedContent(string $filename, string $expectedContent)
     {
+        include_once('tests/resources/Enums/' . $filename);
+
+        Artisan::call('enum-js:generate');
+
+        $jsFilename = preg_replace('/\.php$/', '.js', $filename);
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
+
+        $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function generatedObjectFormatDataProvider(): array
+    {
+        return [
+            'int' => [
+                'filename' => 'Status.php',
+                'expectedContent' => "export const Status = Object.freeze({\n  Inactive: 0,\n  Active: 1,\n})",
+            ],
+            'string' => [
+                'filename' => 'StringValue.php',
+                'expectedContent' => "export const StringValue = Object.freeze({\n  Inactive: \"inactive\",\n  Active: \"active\",\n})",
+            ],
+            'native' => [
+                'filename' => 'Native/Base.php',
+                'expectedContent' => "export const Base = Object.freeze({\n  Value1: \"Value1\",\n  Value2: \"Value2\",\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'native backed int' => [
+                'filename' => 'Native/BackedInt.php',
+                'expectedContent' => "export const BackedInt = Object.freeze({\n  Value1: 1,\n  Value2: 2,\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'native backed string' => [
+                'filename' => 'Native/BackedString.php',
+                'expectedContent' => "export const BackedString = Object.freeze({\n  Value1: \"value-1\",\n  Value2: \"value-2\",\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "export const ArrayValue = Object.freeze({\n  IntArray: [1,2],\n  StringArray: [\"value-1\",\"value-2\"],\n})"
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider generatedObjectFormatDataProvider
+     */
+    public function testGeneratedObjectFormat(string $filename, string $expectedContent)
+    {
+        Config::set('laravel-enum-js.as_object', true);
+
         include_once('tests/resources/Enums/' . $filename);
 
         Artisan::call('enum-js:generate');

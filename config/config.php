@@ -17,4 +17,7 @@ return [
 
     // Set a specific extension for the output files (without a dot character).
     'output_file_extension' => 'js',
+
+    // Set true to export the enums as a single object, false to export them as individual constants
+    'as_object' => false,
 ];
