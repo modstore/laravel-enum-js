@@ -17,7 +17,9 @@ class OutputFormatFactory
         return match ($type) {
             'object' => new ObjectFormatter($class),
             'constant' => new ConstantFormatter($class),
-            default => throw new \InvalidArgumentException("Invalid output format type: {$type}"),
+            default => class_exists($type)
+                ? new $type($class)
+                : throw new \InvalidArgumentException("Invalid output format type: {$type}"),
         };
     }
 

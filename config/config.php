@@ -19,6 +19,6 @@ return [
     'output_file_extension' => 'js',
 
     // here you may configure the desired output style for the generated js files.
-    // Available options: 'constant', 'object'
+    // Available options: 'constant', 'object' or a class string of a class that extends the OutputFormatter.
     'output_style' => 'constant',
 ];

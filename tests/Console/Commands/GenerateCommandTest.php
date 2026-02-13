@@ -5,6 +5,8 @@ namespace Modstore\LaravelEnumJs\Tests\Console\Commands;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
+use Modstore\LaravelEnumJs\Tests\resources\CustomOutputFormatter;
 use Modstore\LaravelEnumJs\Tests\TestCase;
 
 class GenerateCommandTest extends TestCase
@@ -140,5 +142,63 @@ class GenerateCommandTest extends TestCase
         $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
 
         $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function generatedCustomFormatDataProvider(): array
+    {
+        return [
+            'int' => [
+                'filename' => 'Status.php',
+                'expectedContent' => "TEST NAME=Inactive, VALUE=0\nTEST NAME=Active, VALUE=1\n",
+            ],
+            'string' => [
+                'filename' => 'StringValue.php',
+                'expectedContent' => "TEST NAME=Inactive, VALUE=\"inactive\"\nTEST NAME=Active, VALUE=\"active\"\n",
+            ],
+            'native' => [
+                'filename' => 'Native/Base.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=\"Value1\"\nTEST NAME=Value2, VALUE=\"Value2\"\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'native backed int' => [
+                'filename' => 'Native/BackedInt.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=1\nTEST NAME=Value2, VALUE=2\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'native backed string' => [
+                'filename' => 'Native/BackedString.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=\"value-1\"\nTEST NAME=Value2, VALUE=\"value-2\"\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "TEST NAME=IntArray, VALUE=[1,2]\nTEST NAME=StringArray, VALUE=[\"value-1\",\"value-2\"]\n"
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider generatedCustomFormatDataProvider
+     */
+    public function testGeneratedCustomFormat(string $filename, string $expectedContent)
+    {
+        Config::set('laravel-enum-js.output_style', CustomOutputFormatter::class);
+
+        include_once('tests/resources/Enums/' . $filename);
+
+        Artisan::call('enum-js:generate');
+
+        $jsFilename = preg_replace('/\.php$/', '.js', $filename);
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
+
+        $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function testThrowsWhenUsingUnknownFormatter()
+    {
+        Config::set('laravel-enum-js.output_style', 'invalid');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid output format type: invalid');
+
+        Artisan::call('enum-js:generate');
     }
 }
