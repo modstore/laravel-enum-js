@@ -54,6 +54,23 @@ if (this.status === Status.Active) {
 }
 ```
 
+If your enum has a public static helper tagged with `@enum-js-export`, such as:
+```php
+/**
+ * @enum-js-export
+ */
+public static function columns(): array
+{
+    return self::cases();
+}
+```
+then the generator will also export the matching array in JS:
+```javascript
+export const columns = ["Name","Email"]
+```
+
+Only methods that are declared on the enum itself, are public static, take no parameters, and include `@enum-js-export` in the docblock are executed. This makes method execution explicit and opt-in.
+
 ### Testing
 
 ``` bash

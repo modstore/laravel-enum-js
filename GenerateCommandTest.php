@@ -1,0 +1,252 @@
+<?php
+
+namespace Modstore\LaravelEnumJs\Tests\Console\Commands;
+
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
+use Modstore\LaravelEnumJs\Tests\resources\CustomOutputFormatter;
+use Modstore\LaravelEnumJs\Tests\TestCase;
+
+class GenerateCommandTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Config::set('filesystems.disks.enum-js', [
+            'driver' => 'local',
+            'root' => sys_get_temp_dir() . '/laravel-enum-js/Output',
+        ]);
+
+        Config::set('laravel-enum-js.output_disk', 'enum-js');
+        Config::set('laravel-enum-js.input_path', '../../../../../tests/resources/Enums');
+    }
+
+    public function testGenerate()
+    {
+        // Include some classes for this test.
+        include_once('tests/resources/Enums/Status.php');
+        include_once('tests/resources/Enums/StringValue.php');
+        include_once('tests/resources/Enums/Sub/Type.php');
+        include_once('tests/resources/Enums/Native/BackedString.php');
+        include_once('tests/resources/Enums/Native/Base.php');
+        include_once('tests/resources/Enums/Native/BackedInt.php');
+        include_once('tests/resources/Enums/ArrayValue.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedFiles = Storage::disk(config('laravel-enum-js.output_disk'))->allFiles();
+
+        $this->assertSame([
+            'ArrayValue.js',
+            'Native/BackedInt.js',
+            'Native/BackedString.js',
+            'Native/Base.js',
+            'Status.js',
+            'StringValue.js',
+            'Sub/Type.js',
+        ], $generatedFiles);
+    }
+
+    public function generatedContentDataProvider(): array
+    {
+        return [
+            'int' => [
+                'filename' => 'Status.php',
+                'expectedContent' => "export const Inactive = 0\nexport const Active = 1\n",
+            ],
+            'string' => [
+                'filename' => 'StringValue.php',
+                'expectedContent' => "export const Inactive = \"inactive\"\nexport const Active = \"active\"\n",
+            ],
+            'native' => [
+                'filename' => 'Native/Base.php',
+                'expectedContent' => "export const Value1 = \"Value1\"\nexport const Value2 = \"Value2\"\nexport const ADDITIONAL_CONST = [\"example\"]\n",
+            ],
+            'native backed int' => [
+                'filename' => 'Native/BackedInt.php',
+                'expectedContent' => "export const Value1 = 1\nexport const Value2 = 2\nexport const ADDITIONAL_CONST = [\"example\"]\n",
+            ],
+            'native backed string' => [
+                'filename' => 'Native/BackedString.php',
+                'expectedContent' => "export const Value1 = \"value-1\"\nexport const Value2 = \"value-2\"\nexport const ADDITIONAL_CONST = [\"example\"]\n",
+            ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "export const IntArray = [1,2]\nexport const StringArray = [\"value-1\",\"value-2\"]\n",
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider generatedContentDataProvider
+     */
+    public function testGeneratedContent(string $filename, string $expectedContent)
+    {
+        include_once('tests/resources/Enums/' . $filename);
+
+        Artisan::call('enum-js:generate');
+
+        $jsFilename = preg_replace('/\.php$/', '.js', $filename);
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
+
+        $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function generatedObjectFormatDataProvider(): array
+    {
+        return [
+            'int' => [
+                'filename' => 'Status.php',
+                'expectedContent' => "export const Status = Object.freeze({\n  Inactive: 0,\n  Active: 1,\n})",
+            ],
+            'string' => [
+                'filename' => 'StringValue.php',
+                'expectedContent' => "export const StringValue = Object.freeze({\n  Inactive: \"inactive\",\n  Active: \"active\",\n})",
+            ],
+            'native' => [
+                'filename' => 'Native/Base.php',
+                'expectedContent' => "export const Base = Object.freeze({\n  Value1: \"Value1\",\n  Value2: \"Value2\",\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'native backed int' => [
+                'filename' => 'Native/BackedInt.php',
+                'expectedContent' => "export const BackedInt = Object.freeze({\n  Value1: 1,\n  Value2: 2,\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'native backed string' => [
+                'filename' => 'Native/BackedString.php',
+                'expectedContent' => "export const BackedString = Object.freeze({\n  Value1: \"value-1\",\n  Value2: \"value-2\",\n  ADDITIONAL_CONST: [\"example\"],\n})",
+            ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "export const ArrayValue = Object.freeze({\n  IntArray: [1,2],\n  StringArray: [\"value-1\",\"value-2\"],\n})"
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider generatedObjectFormatDataProvider
+     */
+    public function testGeneratedObjectFormat(string $filename, string $expectedContent)
+    {
+        Config::set('laravel-enum-js.output_style', 'object');
+
+        include_once('tests/resources/Enums/' . $filename);
+
+        Artisan::call('enum-js:generate');
+
+        $jsFilename = preg_replace('/\.php$/', '.js', $filename);
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
+
+        $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function generatedCustomFormatDataProvider(): array
+    {
+        return [
+            'int' => [
+                'filename' => 'Status.php',
+                'expectedContent' => "TEST NAME=Inactive, VALUE=0\nTEST NAME=Active, VALUE=1\n",
+            ],
+            'string' => [
+                'filename' => 'StringValue.php',
+                'expectedContent' => "TEST NAME=Inactive, VALUE=\"inactive\"\nTEST NAME=Active, VALUE=\"active\"\n",
+            ],
+            'native' => [
+                'filename' => 'Native/Base.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=\"Value1\"\nTEST NAME=Value2, VALUE=\"Value2\"\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'native backed int' => [
+                'filename' => 'Native/BackedInt.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=1\nTEST NAME=Value2, VALUE=2\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'native backed string' => [
+                'filename' => 'Native/BackedString.php',
+                'expectedContent' => "TEST NAME=Value1, VALUE=\"value-1\"\nTEST NAME=Value2, VALUE=\"value-2\"\nTEST NAME=ADDITIONAL_CONST, VALUE=[\"example\"]\n",
+            ],
+            'array' => [
+                'filename' => 'ArrayValue.php',
+                'expectedContent' => "TEST NAME=IntArray, VALUE=[1,2]\nTEST NAME=StringArray, VALUE=[\"value-1\",\"value-2\"]\n"
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider generatedCustomFormatDataProvider
+     */
+    public function testGeneratedCustomFormat(string $filename, string $expectedContent)
+    {
+        Config::set('laravel-enum-js.output_style', CustomOutputFormatter::class);
+
+        include_once('tests/resources/Enums/' . $filename);
+
+        Artisan::call('enum-js:generate');
+
+        $jsFilename = preg_replace('/\.php$/', '.js', $filename);
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
+
+        $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function testGeneratedContentIncludesExecutedEnumMethods()
+    {
+        include_once('tests/resources/Enums/EnumWithFunctions.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertSame("export const NAME = \"Name\"\nexport const ACCOUNT_NAME = \"Email\"\nexport const columns = [\"Name\",\"Email\"]\nexport const values = [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}]\n", $generatedContent);
+
+        Config::set('laravel-enum-js.output_style', 'object');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertSame("export const EnumWithFunctions = Object.freeze({\n  NAME: \"Name\",\n  ACCOUNT_NAME: \"Email\",\n  columns: [\"Name\",\"Email\"],\n  values: [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}],\n})", $generatedContent);
+    }
+
+    public function testGeneratedContentSkipsUntaggedEnumMethods()
+    {
+        include_once('tests/resources/Enums/EnumWithSafeMethods.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithSafeMethods.js');
+
+        $this->assertSame("export const NAME = \"Name\"\nexport const ACCOUNT_NAME = \"Email\"\nexport const columns = [\"Name\",\"Email\"]\nexport const values = [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}]\n", $generatedContent);
+
+        $this->assertStringNotContainsString('thisIsNotSafe', $generatedContent);
+        $this->assertStringNotContainsString('thisIsAlsoNotSafe', $generatedContent);
+    }
+
+    public function testGeneratedContentWarnsWhenTaggedMethodFails()
+    {
+        include_once('tests/resources/Enums/EnumWithFailingExportMethod.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFailingExportMethod.js');
+
+        $this->assertSame("export const NAME = \"Name\"\nexport const columns = [\"Name\"]\n", $generatedContent);
+        $this->assertStringContainsString(
+            'Skipping @enum-js-export method App\\Enums\\EnumWithFailingExportMethod::failing(): Boom',
+            Artisan::output()
+        );
+    }
+
+    public function testThrowsWhenUsingUnknownFormatter()
+    {
+        Config::set('laravel-enum-js.output_style', 'invalid');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid output format type: invalid');
+
+        Artisan::call('enum-js:generate');
+    }
+}
