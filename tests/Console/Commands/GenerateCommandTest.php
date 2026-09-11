@@ -2,6 +2,7 @@
 
 namespace Modstore\LaravelEnumJs\Tests\Console\Commands;
 
+use App\Enums\EnumWithFunctions;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
@@ -190,6 +191,52 @@ class GenerateCommandTest extends TestCase
         $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get($jsFilename);
 
         $this->assertSame($expectedContent, $generatedContent);
+    }
+
+    public function testGeneratedContentIncludesExecutedEnumMethods()
+    {
+        include_once('tests/resources/Enums/EnumWithFunctions.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertSame("export const NAME = \"Name\"\nexport const ACCOUNT_NAME = \"Email\"\nexport const columns = [\"Name\",\"Email\"]\nexport const values = [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}]\n", $generatedContent);
+
+        Config::set('laravel-enum-js.output_style', 'object');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertSame("export const EnumWithFunctions = Object.freeze({\n  NAME: \"Name\",\n  ACCOUNT_NAME: \"Email\",\n  columns: [\"Name\",\"Email\"],\n  values: [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}],\n})", $generatedContent);
+    }
+
+    public function testGeneratedContentSkipsUntaggedEnumMethods()
+    {
+        include_once('tests/resources/Enums/EnumWithFunctions.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertSame("export const NAME = \"Name\"\nexport const ACCOUNT_NAME = \"Email\"\nexport const columns = [\"Name\",\"Email\"]\nexport const values = [{\"title\":\"NAME\",\"data\":\"Name\"},{\"title\":\"ACCOUNT_NAME\",\"data\":\"Email\"}]\n", $generatedContent);
+
+        $this->assertStringNotContainsString('shouldNotGenerate', $generatedContent);
+    }
+
+    public function testGeneratedContentWarnsWhenTaggedMethodFails()
+    {
+        include_once('tests/resources/Enums/EnumWithFunctions.php');
+
+        Artisan::call('enum-js:generate');
+
+        $generatedContent = Storage::disk(config('laravel-enum-js.output_disk'))->get('EnumWithFunctions.js');
+
+        $this->assertStringContainsString(
+            'Skipping @enum-js-export method App\\Enums\\EnumWithFunctions::failingFunction(): This is a test exception',
+            Artisan::output()
+        );
     }
 
     public function testThrowsWhenUsingUnknownFormatter()

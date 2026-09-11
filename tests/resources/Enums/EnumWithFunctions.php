@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum EnumWithSafeMethods: string
+enum EnumWithFunctions: string
 {
     case NAME = 'Name';
     case ACCOUNT_NAME = 'Email';
@@ -31,13 +31,26 @@ enum EnumWithSafeMethods: string
         return $output;
     }
 
-    public static function thisIsNotSafe(): array
+
+    /**
+     * @enum-js-export
+     */
+    public static function failingFunction(): array
     {
-        return ['time' => time()];
+        throw new \Exception('This is a test exception');
+        $output = [];
+        foreach (self::cases() as $case) {
+            $output[] = [
+                'title' => $case->name,
+                'data' => $case->value,
+            ];
+        }
+
+        return $output;
     }
 
-    public static function thisIsAlsoNotSafe(): array
+    public static function shouldNotGenerate(): array
     {
-        return ['random' => random_int(1, 10)];
+        return self::cases();
     }
 }
