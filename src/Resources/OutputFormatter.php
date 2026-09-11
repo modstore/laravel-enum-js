@@ -6,6 +6,9 @@ use ReflectionClass;
 
 abstract class OutputFormatter
 {
+    protected const JS_EXPORT_TAG = '@enum-js-export';
+    protected array $warnings = [];
+
     public function __construct(protected readonly ReflectionClass $class)
     {
     }
@@ -46,9 +49,95 @@ abstract class OutputFormatter
             $output .= $this->printCase($case);
         }
 
+        foreach ($this->getStaticMethodOutputs() as $name => $value) {
+            $output .= $this->printStaticValue($name, $value);
+        }
+
         $output .= $this->getEnd();
 
         return $output;
+    }
+
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    protected function printStaticValue(string $name, mixed $value): string
+    {
+        return sprintf("export const %s = %s\n", $name, json_encode($value));
+    }
+
+    protected function getStaticMethodOutputs(): array
+    {
+        $methods = [];
+
+        foreach ($this->class->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_STATIC) as $method) {
+            // Only export methods from the same class.
+            if ($method->getDeclaringClass()->getName() !== $this->class->getName()) {
+                continue;
+            }
+
+            if (!$this->isExportableStaticMethod($method)) {
+                continue;
+            }
+
+            try {
+                $value = $method->invoke(null);
+            } catch (\Throwable $exception) {
+                $this->warnings[] = sprintf(
+                    'Skipping @enum-js-export method %s::%s(): %s',
+                    $this->class->getName(),
+                    $method->getName(),
+                    $exception->getMessage()
+                );
+                continue;
+            }
+
+            if ($value === null) {
+                continue;
+            }
+
+            $methods[$method->getName()] = $this->normaliseJsonValue($value);
+        }
+
+        return $methods;
+    }
+
+    protected function isExportableStaticMethod(\ReflectionMethod $method): bool
+    {
+        return $method->getNumberOfParameters() === 0
+            && $this->hasExportTag($method);
+    }
+
+    protected function hasExportTag(\ReflectionMethod $method): bool
+    {
+        return str_contains((string) $method->getDocComment(), self::JS_EXPORT_TAG);
+    }
+
+    protected function normaliseJsonValue(mixed $value): mixed
+    {
+        if ($value instanceof \BackedEnum) {
+            return $value->value;
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                $value[$key] = $this->normaliseJsonValue($item);
+            }
+
+            return $value;
+        }
+
+        if (is_object($value)) {
+            return $this->normaliseJsonValue(get_object_vars($value));
+        }
+
+        return $value;
     }
 
     protected function getEnumValue($enumCase): mixed

@@ -30,4 +30,9 @@ class ObjectFormatter extends OutputFormatter
     {
         return '})';
     }
+
+    protected function printStaticValue(string $name, mixed $value): string
+    {
+        return sprintf("  %s: %s,\n", $name, json_encode($value));
+    }
 }

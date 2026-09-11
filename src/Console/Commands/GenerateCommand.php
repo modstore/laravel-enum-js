@@ -80,7 +80,13 @@ class GenerateCommand extends Command
 
         $formatter = OutputFormatFactory::create( config('laravel-enum-js.output_style', 'constant'), $reflection);
 
-        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $formatter->getFileContents());
+        $output = $formatter->getFileContents();
+
+        foreach ($formatter->getWarnings() as $warning) {
+            $this->warn($warning);
+        }
+
+        Storage::disk(config('laravel-enum-js.output_disk'))->put($outputPath, $output);
 
         $this->info(sprintf('File written to: %s', $outputPath));
     }
